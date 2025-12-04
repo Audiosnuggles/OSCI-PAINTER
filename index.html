@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSCI-PAINTER 1.0</title>
+    
+    <!-- LOCAL FONT INTEGRATION -->
+    <style>
+        @font-face {
+            font-family: 'Syne Mono';
+            src: url('assets/fonts/SyneMono-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        :root {
+            --neon-color: #00ff41;
+            --dim-color: #005515;
+            --bg-color: #0a0a0a;
+            --panel-bg: #141414;
+            --input-bg: #000000;
+            --border-color: #333;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #e0e0e0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        body.modal-open { overflow: hidden; }
+
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            padding: 25px 40px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand h1 {
+            margin: 0; 
+            font-size: 2.0rem; 
+            letter-spacing: -1px; 
+            color: var(--neon-color); 
+            font-family: 'Syne Mono', monospace;
+            font-weight: 400; 
+            text-transform: uppercase;
+        }
+
+        .brand .subtitle {
+            font-size: 0.8rem; color: #666; letter-spacing: 1px;
+            text-transform: uppercase; margin-top: 4px;
+        }
+
+        .btn-icon {
+            width: 36px; height: 36px; border: 1px solid #444; border-radius: 50%;
+            color: var(--neon-color); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-family: 'Courier New', monospace; font-weight: bold; transition: all 0.2s ease;
+        }
+        .btn-icon:hover { background: var(--neon-color); color: #000; box-shadow: 0 0 10px var(--neon-color); }
+
+        .help-small {
+            width: 20px; height: 20px; border: 1px solid #555; border-radius: 50%;
+            color: #888; font-size: 12px; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; margin-left: 10px; font-family: monospace; font-weight: bold;
+        }
+        .help-small:hover { border-color: var(--neon-color); color: var(--neon-color); }
+
+        /* GRID LAYOUT */
+        .content-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 40px;
+        }
+        @media (max-width: 800px) { .content-grid { grid-template-columns: 1fr; } }
+
+        .left-col { display: flex; flex-direction: column; }
+        .input-group { margin-bottom: 25px; }
+        
+        label { 
+            font-size: 0.9rem; font-weight: 600; color: #888; text-transform: uppercase; 
+            display: block; margin-bottom: 10px; 
+        }
+        .label-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .label-row label { margin-bottom: 0; }
+
+        textarea {
+            width: 100%; height: 150px;
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            color: var(--neon-color); padding: 15px;
+            font-family: 'Courier New', monospace; font-size: 12px;
+            border-radius: 6px; resize: vertical; box-sizing: border-box;
+            transition: all 0.2s;
+        }
+        textarea:focus { outline: none; border-color: var(--neon-color); }
+        textarea.drag-over { border: 2px dashed var(--neon-color); background: #0f1a0f; box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.2); }
+        textarea.disabled-mode { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+
+        input[type="number"] {
+            width: 100%; padding: 12px;
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            color: #fff; border-radius: 6px;
+            font-family: 'Courier New', monospace; box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: var(--neon-color); }
+
+        /* TOGGLE SWITCHES */
+        .toggle-wrapper { margin-bottom: 15px; }
+        .toggle-container {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #000; border: 1px solid #444; padding: 10px; border-radius: 6px;
+            cursor: pointer; user-select: none; transition: all 0.3s;
+            margin-bottom: 0;
+        }
+        .toggle-container:hover { border-color: #666; }
+        
+        .toggle-label { 
+            color: #fff; font-size: 0.9rem; font-weight: bold; 
+            display: flex; align-items: center; margin-bottom: 0; 
+            transition: color 0.3s;
+        }
+        
+        .beta-tag { font-size: 0.7em; background: #333; color: #fff; padding: 2px 5px; border-radius: 3px; margin-left: 8px; }
+        
+        /* SVG ICON STYLE */
+        .icon-svg {
+            width: 20px; height: 20px; 
+            margin-right: 12px;
+            fill: currentColor; 
+            transition: all 0.3s;
+            color: #555; 
+        }
+        
+        .toggle-switch {
+            width: 40px; height: 20px; background: #333; border-radius: 20px; position: relative; transition: 0.3s;
+        }
+        .toggle-switch::after {
+            content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            top: 2px; left: 2px; transition: 0.3s;
+        }
+        
+        /* --- ACTIVE STATES --- */
+        .toggle-checkbox { display: none; }
+        .toggle-checkbox:checked + .toggle-container .toggle-switch { background: var(--neon-color); }
+        .toggle-checkbox:checked + .toggle-container .toggle-switch::after { left: 22px; background: #000; }
+        .toggle-checkbox:checked + .toggle-container .toggle-label { color: #fff; }
+        .toggle-checkbox:checked + .toggle-container .icon-svg { 
+            color: var(--neon-color); 
+            filter: drop-shadow(0 0 5px var(--neon-color)); 
+        }
+
+
+        .generate-btn {
+            width: 100%; padding: 18px;
+            background: var(--neon-color); color: #000;
+            border: none; border-radius: 6px;
+            font-size: 1rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; transition: all 0.2s; 
+            margin-top: 40px;
+        }
+        .generate-btn:hover { background: #fff; box-shadow: 0 0 20px rgba(0, 255, 65, 0.4); }
+        .generate-btn:disabled { background: #333; color: #666; cursor: wait; box-shadow: none; transform: none; }
+
+        .status { margin-top: 15px; text-align: center; font-size: 0.85rem; font-family: 'Courier New', monospace; min-height: 20px; }
+
+        /* PROGRESS BAR */
+        .progress-container {
+            width: 100%; height: 6px; background: #333; margin-top: 15px; border-radius: 3px; overflow: hidden; display: none;
+        }
+        .progress-bar {
+            height: 100%; width: 0%; background: var(--neon-color); transition: width 0.1s linear;
+        }
+
+        /* RIGHT COL (PREVIEW) */
+        .right-col { display: flex; flex-direction: column; }
+        .preview-container {
+            width: 100%; aspect-ratio: 1 / 1; background: #000; border: 2px solid #333;
+            border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+        .preview-container.draw-active { cursor: crosshair; }
+        .preview-container.draw-active canvas { pointer-events: auto; }
+
+        /* GRID FIX */
+        .scope-grid {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background-image: linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
+            background-size: 40px 40px; 
+            z-index: 10; 
+            pointer-events: none;
+        }
+
+        canvas {
+            position: absolute; top:0; left:0; width:100%; height:100%; z-index: 2;
+            filter: drop-shadow(0 0 4px var(--neon-color));
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .rendering canvas { opacity: 0.3; filter: grayscale(100%); }
+
+        .preview-label {
+            position: absolute; bottom: 15px; right: 20px;
+            color: #555;
+            font-size: 0.65rem; 
+            text-transform: uppercase; letter-spacing: 1px; font-weight: normal; 
+            z-index: 20; text-align: right;
+            text-shadow: none; 
+            pointer-events: none;
+            line-height: 1.4;
+        }
+        .preview-label span {
+            display: block;
+            opacity: 0.8;
+        }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; }
+        .modal.is-visible { display: flex; opacity: 1; }
+        .modal-content { background: #1a1a1a; border: 1px solid var(--neon-color); padding: 40px; border-radius: 12px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 0 50px rgba(0, 255, 65, 0.15); }
+        .close-btn { position: absolute; top: 15px; right: 20px; color: #666; font-size: 30px; font-weight: bold; cursor: pointer; line-height: 1; }
+        .close-btn:hover { color: #fff; }
+        
+        .modal-title { 
+            margin-top: 0; 
+            color: var(--neon-color); 
+            border-bottom: 1px solid #333; 
+            padding-bottom: 15px; 
+            margin-bottom: 20px; 
+            font-family: 'Syne Mono', monospace;
+            font-size: 1.5rem;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+        
+        .step { margin-bottom: 20px; }
+        .step h3 { color: #fff; font-size: 1rem; margin-bottom: 5px; }
+        .step p { color: #aaa; font-size: 0.9rem; line-height: 1.5; margin: 0; }
+        .step ol { color: #aaa; padding-left: 20px; margin: 5px 0; }
+        .step li { margin-bottom: 5px; font-size: 0.9rem; }
+        .step ul { color: #aaa; padding-left: 20px; margin: 5px 0; }
+        .code { background: #000; color: var(--neon-color); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.85em; }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <header>
+        <div class="brand">
+            <h1>OSCI-PAINTER 1.0</h1>
+            <div class="subtitle">svg & live drawing converter</div>
+        </div>
+        <div class="btn-icon" id="btn-main-info">i</div>
+    </header>
+
+    <div class="content-grid">
+        <div class="left-col">
+            <div class="input-group">
+                <div class="label-row">
+                    <label>1. SVG Code (Drag & Drop)</label>
+                    <div class="help-small" id="btn-detail-info">?</div>
+                </div>
+                
+                <textarea id="svgInput" oninput="updatePreview()" placeholder="Paste SVG code here or drag & drop file..."><?xml version="1.0" encoding="UTF-8"?>
+<svg id="Ebene_2" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 600 600">
+  <path fill="none" stroke="#0a0a0a" stroke-miterlimit="10" stroke-width=".8px" d="M157.8,370.8c-38.7-.4-70-32-70-70.8s31.8-70.8,70.8-70.8,70.8,31.8,70.8,70.8-31.8,70.8-70.8,70.8v10h53.4c1,0,23.7-.9,48.2-23.4,19.7-18.1,40.3-68.7,41.2-70.8h0c5.9-15.8,25.4-56.7,44.3-57.3,7.5-.2,17.2-.2,27.4,0,5.4,0,11,0,16.6,0s16.3,0,24.4,0c-6.6,2.5-12.3,5.6-17.1,9.1-16.9,12.5-24.1,31.4-24.1,63.1s3.4,47.4,28.3,61.9c20.9,12.2,55.6,17.4,115.9,17.4,2.8,0,5-2.2,5-5s-2.2-5-5-5c-57.6,0-91.8-4.9-110.8-16-16.8-9.8-23.4-24.7-23.4-53.3,0-50,15.9-72.3,109.9-72.3h24.3c2.8,0,5-2.2,5-5s-2.2-5-5-5h-64.5c-.4,0-35.7,0-62.8,0s-11.1,0-16.5,0c-10.4,0-20.1-.2-27.8,0-28.9.9-50.8,56.9-53.3,63.6-.8,1.9-20.9,50.8-38.7,67.1-21.1,19.4-40.7,20.7-41.7,20.8h-14.2c25-13.8,41.9-40.3,41.9-70.8,0-44.6-36.2-80.8-80.8-80.8s-80.8,36.2-80.8,80.8,33.6,76.9,74.5,80.8c.6.2-.2,0,.5,0h5v-10Z"/>
+</svg></textarea>
+            </div>
+
+            <div class="controls">
+                <div><label>Loops (Pitch)</label><input type="number" id="rotations" value="1" step="1" min="0" oninput="updatePreview()"></div>
+                <div><label>Duration (s)</label><input type="number" id="duration" value="4" step="1"></div>
+            </div>
+
+            <div class="toggle-wrapper">
+                <input type="checkbox" id="mode3d" class="toggle-checkbox" onchange="updatePreview()">
+                <label for="mode3d" class="toggle-container">
+                    <span class="toggle-label">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12.33 2l-9.15 4.7 9.15 4.7 9.15-4.7-9.15-4.7zm0 11.23l-9.15-4.7v9.4l9.15 4.7 9.15-4.7v-9.4l-9.15 4.7z"/></svg>
+                        3D EXTRUSION <span class="beta-tag">BETA</span>
+                    </span>
+                    <div class="toggle-switch"></div>
+                </label>
+            </div>
+
+            <div class="toggle-wrapper">
+                <input type="checkbox" id="modeDraw" class="toggle-checkbox">
+                <label for="modeDraw" class="toggle-container">
+                    <span class="toggle-label">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        DRAWING MODE
+                    </span>
+                    <div class="toggle-switch"></div>
+                </label>
+            </div>
+
+            <div class="toggle-wrapper">
+                <input type="checkbox" id="modeAudio" class="toggle-checkbox" onchange="toggleAudioMonitor()">
+                <label for="modeAudio" class="toggle-container">
+                    <span class="toggle-label">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        SOUND MONITOR
+                    </span>
+                    <div class="toggle-switch"></div>
+                </label>
+            </div>
+
+            <button class="generate-btn" id="genBtn" onclick="downloadWav()">Download WAV</button>
+            <div class="progress-container" id="progContainer"><div class="progress-bar" id="progBar"></div></div>
+            <div class="status" id="status"></div>
+        </div>
+
+        <div class="right-col">
+            <div class="preview-container" id="previewBox">
+                <div class="scope-grid"></div>
+                <canvas id="scopeCanvas" width="400" height="400"></canvas>
+                <div class="preview-label">OSCI-PAINTER 1.0<br><span>CRT SIMULATION</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TECHNICAL INFO MODAL -->
+<div id="modal-main" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" data-target="modal-main">&times;</span>
+        <h2 class="modal-title">Manual & Theory</h2>
+        
+        <div class="step">
+            <h3>1. Hardware Setup</h3>
+            <ol>
+                <li>Connect your <strong>audio interface</strong> to the oscilloscope.</li>
+                <li>IMPORTANT: The interface should be <strong>DC-coupled</strong> (Direct Current coupling).</li>
+                <li>Set the oscilloscope to <strong>X-Y mode</strong>.</li>
+                <li>Select your interface in the top menu under "Audio Output".</li>
+            </ol>
+        </div>
+
+        <div class="step">
+            <h3>2. Live Drawing (Auto-Freeze)</h3>
+            <p>In Drawing Mode, rotation stops automatically when you press the mouse button. After releasing, you have a 2-second window to continue drawing before the animation resumes.</p>
+        </div>
+
+        <div class="step">
+            <h3>3. Theory</h3>
+            <p>This tool uses <strong>vector synthesis</strong> (Lissajous figures). The image is not created by pixels, but by continuous voltage signals (Left = X, Right = Y).</p>
+        </div>
+    </div>
+</div>
+
+<!-- DETAIL HELP (? - Button) -->
+<div id="modal-detail" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" data-target="modal-detail">&times;</span>
+        <h2 class="modal-title">SVG Formatting</h2>
+        <div class="step">
+            <h3>Optimization for Oscilloscopes</h3>
+            <p>To ensure your graphic looks and sounds clean:</p>
+            <ol>
+                <li>Use <strong>no fill</strong> (Fill: none).</li>
+                <li>Use only <strong>strokes</strong> (outlines).</li>
+                <li>Combine paths into a single compound path to avoid jumps.</li>
+                <li>Avoid excessive small details (these create noise).</li>
+            </ol>
+        </div>
+        <div class="step">
+            <h3>Drag & Drop</h3>
+            <p>You can drag .svg files directly onto the text area.</p>
+        </div>
+    </div>
+</div>
+
+<div id="svgContainer" style="display:none;"></div>
+
+<!-- LICENSING OVERLAY -->
+<div id="license-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0a0a0a; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:'Syne Mono', monospace;">
+    <h1 style="color:#00ff41; margin-bottom:20px; font-size:2rem;">OSCI-PAINTER LOCKED</h1>
+    <p style="color:#888; margin-bottom:30px;">Please enter license key</p>
+    <input type="text" id="license-key" placeholder="XXXX-XXXX" style="padding:15px; background:#000; border:1px solid #333; color:#fff; font-family:'Syne Mono', monospace; font-size:1.2rem; text-align:center; margin-bottom:20px; width:300px; border-radius:6px; outline:none;">
+    <button onclick="checkLicense()" style="padding:15px 40px; background:var(--neon-color); color:#000; border:none; font-weight:bold; cursor:pointer; font-size:1rem; border-radius:6px;">UNLOCK APP</button>
+    <p id="license-error" style="color:#ff5e5e; margin-top:20px; display:none;">Invalid Key!</p>
+</div>
+
+<script>
+    // --- IPC & ELECTRON COMM ---
+    let ipcRenderer;
+    try {
+        const electron = require('electron');
+        ipcRenderer = electron.ipcRenderer;
+        ipcRenderer.on('set-audio-output', (event, deviceId) => {
+            changeAudioOutput(deviceId);
+        });
+    } catch (e) {
+        console.log("Not in Electron environment");
+    }
+
+    // --- LICENSING & GUMROAD ---
+    // CHANGE THIS TO YOUR PERMALINK
+    const GUMROAD_PERMALINK = 'yiewht'; 
+    const OFFLINE_KEYS = ["OSCI-DEMO", "DEV-MODE"];
+
+    if (localStorage.getItem('osci_license') === 'valid') {
+        document.getElementById('license-modal').style.display = 'none';
+    }
+
+    async function checkLicense() {
+        const input = document.getElementById('license-key');
+        const key = input.value.trim();
+        const btn = document.querySelector('#license-modal button');
+        const errorMsg = document.getElementById('license-error');
+
+        if (!key) return;
+
+        const originalText = btn.textContent;
+        btn.textContent = "VERIFYING...";
+        btn.disabled = true;
+        input.disabled = true;
+        errorMsg.style.display = 'none';
+
+        if (OFFLINE_KEYS.includes(key)) {
+            unlockApp();
+            return;
+        }
+
+        try {
+            const response = await fetch('https://api.gumroad.com/v2/licenses/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    'product_permalink': GUMROAD_PERMALINK,
+                    'license_key': key,
+                    'increment_uses_count': 'true'
+                })
+            });
+            
+            const data = await response.json();
+
+            if (data.success && !data.purchase.refunded && !data.purchase.chargebacked) {
+                unlockApp();
+            } else {
+                throw new Error("Invalid");
+            }
+        } catch (e) {
+            console.error(e);
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = "Invalid Key or Connection Error";
+            input.style.borderColor = '#ff5e5e';
+            btn.textContent = originalText;
+            btn.disabled = false;
+            input.disabled = false;
+        }
+    }
+
+    function unlockApp() {
+        localStorage.setItem('osci_license', 'valid');
+        document.getElementById('license-modal').style.display = 'none';
+        flashStatus("Welcome back!", "#00ff41");
+    }
+
+    // UI Helpers
+    const modalMain = document.getElementById('modal-main');
+    const modalDetail = document.getElementById('modal-detail');
+    const btnMain = document.getElementById('btn-main-info');
+    const btnDetail = document.getElementById('btn-detail-info');
+    const closeBtns = document.querySelectorAll('.close-btn');
+    btnMain.addEventListener('click', () => openModal(modalMain));
+    btnDetail.addEventListener('click', () => openModal(modalDetail));
+    closeBtns.forEach(btn => btn.addEventListener('click', (e) => closeModal(document.getElementById(e.target.getAttribute('data-target')))));
+    window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) closeModal(e.target); });
+    function openModal(modal) { modal.classList.add('is-visible'); document.body.classList.add('modal-open'); }
+    function closeModal(modal) { modal.classList.remove('is-visible'); document.body.classList.remove('modal-open'); }
+    function flashStatus(text, color) { const s = document.getElementById('status'); s.textContent = text; s.style.color = color; s.style.opacity = 1; setTimeout(() => s.style.opacity = 0.7, 2000);}
+
+    // Drag & Drop
+    const dropZone = document.getElementById('svgInput');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, (e) => { e.preventDefault(); e.stopPropagation(); }, false));
+    dropZone.addEventListener('dragenter', () => { if(!drawModeActive) dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', handleDrop, false);
+    function handleDrop(e) {
+        dropZone.classList.remove('drag-over');
+        if(drawModeActive) return;
+        let file = e.dataTransfer.files[0];
+        if (file && (file.type === 'image/svg+xml' || file.name.endsWith('.svg'))) {
+            let reader = new FileReader();
+            reader.readAsText(file);
+            reader.onloadend = function() { dropZone.value = reader.result; updatePreview(); flashStatus("File loaded!", "#00ff41"); }
+        } else { flashStatus("Only .svg allowed!", "#ff5e5e"); }
+    }
+
+    // Global State
+    let pathElement = null; let pathPoints = []; let pathStats = { x:0, y:0, w:250, h:250 }; 
+    let drawModeActive = false; let isDrawingMouse = false; let drawnRawPoints = []; 
+    let animationFrameId; let startTime = 0; let isRotated = true; let rotationTimer = null; 
+    let audioCtx = null; let audioSource = null; let isMonitorOn = false; let selectedAudioDeviceId = 'default';
+
+    const modeDrawToggle = document.getElementById('modeDraw');
+    const previewBox = document.getElementById('previewBox');
+    const canvas = document.getElementById('scopeCanvas');
+
+    window.onload = function() { 
+        updatePreview(); 
+        initAudioDevicesMenu();
+    };
+
+    // --- AUDIO DEVICES (Menu) ---
+    async function initAudioDevicesMenu() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+            if(ipcRenderer) {
+                const deviceList = audioOutputs.map(d => ({
+                    id: d.deviceId,
+                    label: d.label || `Device ${d.deviceId.substr(0,5)}`
+                }));
+                ipcRenderer.send('update-audio-menu', deviceList);
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    async function changeAudioOutput(deviceId) {
+        selectedAudioDeviceId = deviceId;
+        if (audioCtx) {
+            if (typeof audioCtx.setSinkId === 'function') {
+                try {
+                    await audioCtx.setSinkId(selectedAudioDeviceId);
+                    flashStatus("Output changed", "#00ff41");
+                } catch (err) { flashStatus("Error changing output", "#ff5e5e"); }
+            }
+        }
+    }
+
+    // --- CORE UPDATE ---
+    function updatePreview() {
+        updateDataModel();
+        if(!animationFrameId) { startTime = Date.now(); animatePreview(); }
+        if(isMonitorOn) updateAudioLoop();
+    }
+
+    function updateDataModel() {
+        const ctx = canvas.getContext('2d');
+        if (drawModeActive) {
+            if (drawnRawPoints.length > 1) { pathElement = true; pathPoints = [...drawnRawPoints]; pathStats = { x: -1, y: -1, w: 2, h: 2 }; } else { pathElement = null; pathPoints = []; }
+        } else {
+            const svgRaw = document.getElementById('svgInput').value;
+            const container = document.getElementById('svgContainer');
+            if (!svgRaw.trim()) { pathElement = null; pathPoints = []; return; }
+            container.innerHTML = svgRaw;
+            const paths = container.querySelectorAll('path');
+            if (paths.length > 0) {
+                pathElement = paths[0]; 
+                let svgElem = container.querySelector('svg');
+                let viewBox = svgElem.viewBox.baseVal;
+                let vbX = viewBox ? viewBox.x : 0; let vbY = viewBox ? viewBox.y : 0; let vbW = (viewBox && viewBox.width > 0) ? viewBox.width : 250; let vbH = (viewBox && viewBox.height > 0) ? viewBox.height : 250;
+                if(vbW === 0 && svgElem.width.baseVal) vbW = svgElem.width.baseVal.value; if(vbH === 0 && svgElem.height.baseVal) vbH = svgElem.height.baseVal.value; if(vbW === 0) vbW = 250;
+                pathStats = { x: vbX, y: vbY, w: vbW, h: vbH };
+                let totalLength = 0; paths.forEach(p => totalLength += p.getTotalLength());
+                pathPoints = []; const totalResolution = 3000; 
+                paths.forEach(p => {
+                    const pLen = p.getTotalLength();
+                    if (pLen > 0) {
+                        const steps = Math.max(2, Math.floor((pLen / totalLength) * totalResolution));
+                        for(let i=0; i<=steps; i++) {
+                            let pt = p.getPointAtLength((i/steps) * pLen);
+                            pathPoints.push({ x: pt.x, y: pt.y });
+                        }
+                    }
+                });
+            } else { pathElement = null; pathPoints = []; }
+        }
+    }
+
+    function toggleAudioMonitor() {
+        const toggle = document.getElementById('modeAudio');
+        isMonitorOn = toggle.checked;
+        if (isMonitorOn) {
+            if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if(selectedAudioDeviceId !== 'default' && typeof audioCtx.setSinkId === 'function') audioCtx.setSinkId(selectedAudioDeviceId); }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            updateAudioLoop();
+            flashStatus("Audio Monitor ON", "#00ff41");
+        } else {
+            if (audioSource) { audioSource.stop(); audioSource = null; }
+            flashStatus("Audio Monitor OFF", "#888");
+        }
+    }
+
+    function updateAudioLoop() {
+        if (!isMonitorOn || !audioCtx || pathPoints.length === 0) return;
+        if (audioSource) { audioSource.stop(); audioSource = null; }
+        
+        let rotInput = document.getElementById('rotations').value;
+        let rotations = rotInput === "" ? 1 : parseFloat(rotInput);
+        const durationInput = parseFloat(document.getElementById('duration').value) || 4;
+        const is3D = document.getElementById('mode3d').checked;
+
+        const signal = generateSignalData(rotations, durationInput, is3D, audioCtx.sampleRate);
+        const buffer = audioCtx.createBuffer(2, signal.left.length, audioCtx.sampleRate);
+        buffer.copyToChannel(signal.left, 0); buffer.copyToChannel(signal.right, 1);
+
+        audioSource = audioCtx.createBufferSource();
+        audioSource.buffer = buffer;
+        audioSource.loop = true;
+        audioSource.connect(audioCtx.destination);
+        audioSource.start();
+    }
+
+    function generateSignalData(rotations, duration, is3D, sampleRate) {
+        const fps = 50; const totalSamples = Math.floor(duration * sampleRate); const samplesPerFrame = Math.floor(sampleRate / fps); 
+        let leftChannel = new Float32Array(totalSamples); let rightChannel = new Float32Array(totalSamples); let globalMax = 0.00001;
+        const tableLen = pathPoints.length - 1; const zDepth = 0.05;
+
+        for (let i = 0; i < totalSamples; i++) {
+            let loopProgress = i / totalSamples;
+            let angleRad = loopProgress * (Math.PI * 2) * rotations;
+            let cosA = Math.cos(angleRad); let sinA = Math.sin(angleRad);
+            let frameProgress = (i % samplesPerFrame) / samplesPerFrame;
+            let pathPos = 0; let effectiveZ = 0;
+
+            if(is3D) { if (frameProgress < 0.5) { pathPos = frameProgress * 2.0; effectiveZ = zDepth; } else { pathPos = 1.0 - ((frameProgress - 0.5) * 2.0); effectiveZ = -zDepth; } } else { pathPos = frameProgress; effectiveZ = 0; }
+
+            let floatIndex = pathPos * tableLen; let idx = Math.floor(floatIndex); let frac = floatIndex - idx; if(idx >= tableLen) idx = tableLen - 1;
+            let p1 = pathPoints[idx]; let p2 = pathPoints[Math.min(idx + 1, tableLen)];
+            let ptX = p1.x + (p2.x - p1.x) * frac; let ptY = p1.y + (p2.y - p1.y) * frac;
+            let rawX = (ptX - pathStats.x - (pathStats.w/2)) / (pathStats.w/2); let rawY = -1 * (ptY - pathStats.y - (pathStats.h/2)) / (pathStats.h/2); let rawZ = effectiveZ;
+            let rotX = rawX * cosA - rawZ * sinA; let rotY = rawY; let rotZ = rawX * sinA + rawZ * cosA;
+            let depth = rotZ * 0.15; let persp = 1.0 / (1.0 - depth); if (depth >= 0.9) persp = 10.0;
+            let scopeX = rotX * persp; let scopeY = rotY * persp;
+            globalMax = Math.max(globalMax, Math.abs(scopeX), Math.abs(scopeY));
+            leftChannel[i] = scopeX; rightChannel[i] = scopeY;
+        }
+        const targetAmp = 0.90; const ampFactor = targetAmp / globalMax;
+        for(let i=0; i<totalSamples; i++) { leftChannel[i] *= ampFactor; rightChannel[i] *= ampFactor; }
+        return { left: leftChannel, right: rightChannel };
+    }
+
+    modeDrawToggle.addEventListener('change', (e) => {
+        drawModeActive = e.target.checked;
+        if(drawModeActive) { dropZone.classList.add('disabled-mode'); previewBox.classList.add('draw-active'); flashStatus("Drawing Mode Active", "#00ff41"); drawnRawPoints = []; } else { dropZone.classList.remove('disabled-mode'); previewBox.classList.remove('draw-active'); isRotated = true; flashStatus("SVG Mode Active", "#00ff41"); }
+        updatePreview();
+    });
+
+    canvas.addEventListener('mousedown', startDrawing);
+    window.addEventListener('mousemove', draw); 
+    window.addEventListener('mouseup', stopDrawing); 
+    
+    function startDrawing(e) { if(!drawModeActive) return; isRotated = false; if (rotationTimer) { clearTimeout(rotationTimer); rotationTimer = null; } isDrawingMouse = true; if (!drawnRawPoints.length > 0 || rotationTimer === null) drawnRawPoints = []; draw(e); }
+    
+    function draw(e) { 
+        if(!isDrawingMouse || !drawModeActive) return; 
+        const rect = canvas.getBoundingClientRect(); 
+        const x = e.clientX - rect.left; 
+        const y = e.clientY - rect.top; 
+        
+        // SCALE TO 98% AND CLAMP
+        let normX = (x / rect.width) * 2 - 1; 
+        let normY = (y / rect.height) * 2 - 1; 
+        
+        normX = Math.max(-1.2, Math.min(1.2, normX)); 
+        normY = Math.max(-1.2, Math.min(1.2, normY));
+
+        drawnRawPoints.push({ x: normX, y: normY }); 
+        updateDataModel(); 
+    }
+    
+    function stopDrawing() { if(isDrawingMouse) { isDrawingMouse = false; updatePreview(); if (rotationTimer) clearTimeout(rotationTimer); rotationTimer = setTimeout(() => { isRotated = true; rotationTimer = null; }, 2000); } }
+
+    function animatePreview() {
+        if (pathPoints.length === 0) { const canvas = document.getElementById('scopeCanvas'); const ctx = canvas.getContext('2d'); ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height); animationFrameId = requestAnimationFrame(animatePreview); return; }
+        const canvas = document.getElementById('scopeCanvas'); const ctx = canvas.getContext('2d'); const width = canvas.width; const height = canvas.height;
+        ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; ctx.fillRect(0, 0, width, height);
+        let rotInput = document.getElementById('rotations').value; let rotations = rotInput === "" ? 1 : parseFloat(rotInput);
+        const time = (Date.now() - startTime) / 1000; const cycleTime = 4.0; 
+        let angleRad = 0; if (isRotated) { let progress = (time % cycleTime) / cycleTime; angleRad = progress * (Math.PI * 2) * rotations; } else { angleRad = 0; }
+        const cosA = Math.cos(angleRad); const sinA = Math.sin(angleRad); const is3D = document.getElementById('mode3d').checked; const numPoints = drawModeActive ? Math.min(pathPoints.length, 300) : 600; const zDepth = 0.05;
+        function drawPoly(pointIndices, zVal, color, lineWidth) { 
+            ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.shadowBlur = 4; ctx.shadowColor = color; let firstPt = true; 
+            pointIndices.forEach((idx, i) => { 
+                let safeIdx = Math.min(Math.floor(idx), pathPoints.length - 1); let pt = pathPoints[safeIdx]; if (!pt) return; 
+                let rawX = (pt.x - pathStats.x - (pathStats.w/2)) / (pathStats.w/2); let rawY = -1 * (pt.y - pathStats.y - (pathStats.h/2)) / (pathStats.h/2); let rawZ = zVal; 
+                let rotX = rawX * cosA - rawZ * sinA; let rotY = rawY; let rotZ = rawX * sinA + rawZ * cosA; 
+                let depth = rotZ * 0.15; let persp = 1.0 / (1.0 - depth); 
+                let scopeX = rotX * persp; let scopeY = rotY * persp; 
+                let screenX = (scopeX * 0.48 * width) + (width / 2); let screenY = (-scopeY * 0.48 * height) + (height / 2); 
+                if (firstPt) { ctx.moveTo(screenX, screenY); firstPt = false; } else ctx.lineTo(screenX, screenY); 
+            }); 
+            ctx.stroke(); 
+        }
+        let mainPathIndices = []; if (drawModeActive && pathPoints.length < numPoints) { for(let i=0; i<pathPoints.length; i++) mainPathIndices.push(i); } else { for(let i=0; i<=numPoints; i++) mainPathIndices.push((i/numPoints) * (pathPoints.length - 1)); }
+        if(is3D) { drawPoly(mainPathIndices, -zDepth, '#00ff41', 2); drawPoly(mainPathIndices, zDepth, '#00ff41', 2); } else { drawPoly(mainPathIndices, 0, '#00ff41', 2); }
+        animationFrameId = requestAnimationFrame(animatePreview);
+    }
+
+    function downloadWav() {
+        let rotInput = document.getElementById('rotations').value; let rotations = rotInput === "" ? 1 : parseFloat(rotInput);
+        const durationInput = parseFloat(document.getElementById('duration').value); const is3D = document.getElementById('mode3d').checked;
+        if (pathPoints.length === 0) { flashStatus("No Data!", "#ff5e5e"); return; }
+        document.getElementById('genBtn').disabled = true; document.getElementById('genBtn').textContent = "Calculating..."; flashStatus("Calculating...", "#00ff41");
+        setTimeout(() => {
+            const sampleRate = 48000; const signal = generateSignalData(rotations, durationInput, is3D, sampleRate);
+            const buffer = createWavFile(signal.left, signal.right, sampleRate);
+            const blob = new Blob([buffer], { type: 'audio/wav' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'osci-lab.wav'; a.click();
+            document.getElementById('genBtn').disabled = false; document.getElementById('genBtn').textContent = "Download WAV"; flashStatus("WAV Download started!", "#00ff41");
+        }, 50);
+    }
+
+    function createWavFile(left, right, sampleRate) { const len = left.length; const buffer = new ArrayBuffer(44 + len * 4); const view = new DataView(buffer); writeString(view, 0, 'RIFF'); view.setUint32(4, 36 + len * 4, true); writeString(view, 8, 'WAVE'); writeString(view, 12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 2, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 4, true); view.setUint16(32, 4, true); view.setUint16(34, 16, true); writeString(view, 36, 'data'); view.setUint32(40, len * 4, true); let offset = 44; for (let i = 0; i < len; i++) { let lx = Math.max(-32767, Math.min(32767, left[i] * 32767)); let ly = Math.max(-32767, Math.min(32767, right[i] * 32767)); view.setInt16(offset, lx, true); offset += 2; view.setInt16(offset, ly, true); offset += 2; } return view; }
+    function writeString(view, offset, string) { for (let i = 0; i < string.length; i++) { view.setUint8(offset + i, string.charCodeAt(i)); } }
+</script>
+
+</body>
+</html>
