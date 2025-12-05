@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.gumroad.com; img-src 'self' data: blob:">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OSCI-PAINTER 1.0</title>
     
@@ -327,7 +328,7 @@
                 </label>
             </div>
 
-            <button class="generate-btn" id="genBtn" onclick="downloadWav()">Download WAV</button>
+            <button class="generate-btn" id="genBtn" onclick="downloadWav()">GENERATE WAV</button>
             <div class="progress-container" id="progContainer"><div class="progress-bar" id="progBar"></div></div>
             <div class="status" id="status"></div>
         </div>

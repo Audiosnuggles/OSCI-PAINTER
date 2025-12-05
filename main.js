@@ -29,10 +29,10 @@ const createWindow = () => {
 app.setAboutPanelOptions({
     applicationName: 'Osci-Painter',
     applicationVersion: '1.0',
-    copyright: '© 2025 Osci-Painter Project',
+    copyright: '© 2025 The Humants',
     version: 'Build 2025.1',
     credits: 'Vector synthesis engine based on Web Audio API & Canvas.',
-    authors: ['Your Name / Studio'],
+    authors: ['Moritz Federlein/ The Humants'],
     website: 'https://thehumants.com/OsciPainter/index.html',
     iconPath: path.join(__dirname, 'assets', 'icon.png') 
 });
@@ -99,7 +99,7 @@ ipcMain.on('update-audio-menu', (event, devices) => {
             label: 'Help',
             submenu: [
                 {
-                    label: 'Online Documentation',
+                    label: 'HELP',
                     click: async () => {
                         await shell.openExternal('https://thehumants.com/OsciPainter/index.html'); 
                     }
