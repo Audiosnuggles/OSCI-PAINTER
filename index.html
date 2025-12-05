@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.gumroad.com; img-src 'self' data: blob:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.gumroad.com; img-src 'self' data: blob:">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OSCI-PAINTER 1.0</title>
     
-    <!-- LOCAL FONT INTEGRATION -->
     <style>
         @font-face {
             font-family: 'Syne Mono';
@@ -343,7 +342,6 @@
     </div>
 </div>
 
-<!-- TECHNICAL INFO MODAL -->
 <div id="modal-main" class="modal">
     <div class="modal-content">
         <span class="close-btn" data-target="modal-main">&times;</span>
@@ -371,7 +369,6 @@
     </div>
 </div>
 
-<!-- DETAIL HELP (? - Button) -->
 <div id="modal-detail" class="modal">
     <div class="modal-content">
         <span class="close-btn" data-target="modal-detail">&times;</span>
@@ -395,7 +392,6 @@
 
 <div id="svgContainer" style="display:none;"></div>
 
-<!-- LICENSING OVERLAY -->
 <div id="license-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0a0a0a; z-index:99999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:'Syne Mono', monospace;">
     <h1 style="color:#00ff41; margin-bottom:20px; font-size:2rem;">OSCI-PAINTER LOCKED</h1>
     <p style="color:#888; margin-bottom:30px;">Please enter license key</p>
@@ -418,8 +414,8 @@
     }
 
     // --- LICENSING & GUMROAD ---
-    // CHANGE THIS TO YOUR PERMALINK
-    const GUMROAD_PERMALINK = 'yiewht'; 
+    // KORRIGIERT: Hier muss dein echter Permalink rein ('osci-painter')
+    const GUMROAD_PERMALINK = 'osci-painter'; 
     const OFFLINE_KEYS = ["OSCI-DEMO", "DEV-MODE"];
 
     if (localStorage.getItem('osci_license') === 'valid') {
@@ -450,7 +446,7 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
-                    'product_permalink': GUMROAD_PERMALINK,
+                    'product_permalink': GUMROAD_PERMALINK,  // <-- WICHTIG: Jetzt wieder Permalink
                     'license_key': key,
                     'increment_uses_count': 'true'
                 })

@@ -46,7 +46,7 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       config: {
         icon: path.resolve(__dirname, 'assets/icon.icns'),
-        name: 'OsciPainterInstaller',
+        name: 'Osci-Painter-V1_Installer',
         format: 'ULFO',
         background: path.resolve(__dirname, 'assets/dmg-background.png'),
         license: path.resolve(__dirname, 'LICENSE.txt'),
