@@ -414,8 +414,8 @@
     }
 
     // --- LICENSING & GUMROAD ---
-    // KORRIGIERT: Hier muss dein echter Permalink rein ('osci-painter')
-    const GUMROAD_PERMALINK = 'osci-painter'; 
+    // KORRIGIERT: Wir verwenden jetzt die vom Server geforderte PRODUCT_ID
+    const GUMROAD_PRODUCT_ID = '1KGZVIek9OMCMS31c66pCQ==';
     const OFFLINE_KEYS = ["OSCI-DEMO", "DEV-MODE"];
 
     if (localStorage.getItem('osci_license') === 'valid') {
@@ -430,39 +430,55 @@
 
         if (!key) return;
 
+        // UI Updates
         const originalText = btn.textContent;
         btn.textContent = "VERIFYING...";
         btn.disabled = true;
         input.disabled = true;
         errorMsg.style.display = 'none';
 
+        // Dev-Keys Check
         if (OFFLINE_KEYS.includes(key)) {
             unlockApp();
             return;
         }
 
         try {
+            // FINALE KORREKTUR: Nutzt 'product_id' und URLSearchParams (Form-Data)
             const response = await fetch('https://api.gumroad.com/v2/licenses/verify', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: { 
+                    // Setzen des Headers für Form-Data
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
                 body: new URLSearchParams({
-                    'product_permalink': GUMROAD_PERMALINK,  // <-- WICHTIG: Jetzt wieder Permalink
+                    // WICHTIG: Nutzt product_id, wie vom Server gefordert
+                    'product_id': GUMROAD_PRODUCT_ID, 
                     'license_key': key,
-                    'increment_uses_count': 'true'
+                    'increment_uses_count': 'true' // Als String senden
                 })
             });
             
             const data = await response.json();
+            console.log("Gumroad Antwort:", data); 
 
             if (data.success && !data.purchase.refunded && !data.purchase.chargebacked) {
                 unlockApp();
             } else {
-                throw new Error("Invalid");
+                // Bei Fehler: Gumroad sendet oft eine "message" im Body
+                throw new Error(data.message || "Invalid Key");
             }
         } catch (e) {
-            console.error(e);
+            console.error("Fehler:", e);
             errorMsg.style.display = 'block';
-            errorMsg.textContent = "Invalid Key or Connection Error";
+            
+            if (e.message.includes("500") || e.message.includes("Server Error")) {
+                errorMsg.textContent = "Server Error: Bitte prüfen Sie Ihren echten Lizenzschlüssel.";
+            } else {
+                errorMsg.textContent = e.message || "Connection Error";
+            }
+            
+            // UI Reset
             input.style.borderColor = '#ff5e5e';
             btn.textContent = originalText;
             btn.disabled = false;
@@ -723,7 +739,7 @@
         }, 50);
     }
 
-    function createWavFile(left, right, sampleRate) { const len = left.length; const buffer = new ArrayBuffer(44 + len * 4); const view = new DataView(buffer); writeString(view, 0, 'RIFF'); view.setUint32(4, 36 + len * 4, true); writeString(view, 8, 'WAVE'); writeString(view, 12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 2, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 4, true); view.setUint16(32, 4, true); view.setUint16(34, 16, true); writeString(view, 36, 'data'); view.setUint32(40, len * 4, true); let offset = 44; for (let i = 0; i < len; i++) { let lx = Math.max(-32767, Math.min(32767, left[i] * 32767)); let ly = Math.max(-32767, Math.min(32767, right[i] * 32767)); view.setInt16(offset, lx, true); offset += 2; view.setInt16(offset, ly, true); offset += 2; } return view; }
+    function createWavFile(left, right, sampleRate) { const len = left.length; const buffer = new ArrayBuffer(44 + len * 4); const view = new DataView(buffer); writeString(view, 0, 'RIFF'); view.setUint32(4, 36 + len * 4, true); writeString(view, 8, 'WAVE'); view.setUint32(4, 36 + len * 4, true); writeString(view, 8, 'WAVE'); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 2, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 4, true); view.setUint16(32, 4, true); view.setUint16(34, 16, true); writeString(view, 36, 'data'); view.setUint32(40, len * 4, true); let offset = 44; for (let i = 0; i < len; i++) { let lx = Math.max(-32767, Math.min(32767, left[i] * 32767)); let ly = Math.max(-32767, Math.min(32767, right[i] * 32767)); view.setInt16(offset, lx, true); offset += 2; view.setInt16(offset, ly, true); offset += 2; } return view; }
     function writeString(view, offset, string) { for (let i = 0; i < string.length; i++) { view.setUint8(offset + i, string.charCodeAt(i)); } }
 </script>
 

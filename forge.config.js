@@ -7,8 +7,10 @@ module.exports = {
     asar: true,
     icon: path.resolve(__dirname, 'assets/icon'),
     osxUniversal: {},
+    // FIX: Hinzufügen der entitlements.plist zu den extraResource
     extraResource: [
-      path.resolve(__dirname, 'LICENSE.txt')
+      path.resolve(__dirname, 'LICENSE.txt'),
+      path.resolve(__dirname, 'entitlements.plist')
     ],
     ignore: [
       "^/\\.git",
@@ -41,7 +43,7 @@ module.exports = {
         setupIcon: path.resolve(__dirname, 'assets/icon.ico')
       },
     },
-    // --- DMG CONFIG (KORRIGIERT) ---
+    // DMG CONFIG (Hintergrundbild und Icons)
     {
       name: '@electron-forge/maker-dmg',
       config: {
@@ -53,14 +55,11 @@ module.exports = {
         window: {
             size: { width: 600, height: 400 }
         },
-        // WICHTIG: Hier geben wir den Zielpfad als festen String an.
-        // Dieser Pfad wird erst abgerufen, wenn der 'Package'-Schritt fertig ist.
         contents: [
           {
             x: 160,
             y: 200,
             type: 'file',
-            // Wir zeigen direkt auf den Ort, wo die App landen wird:
             path: path.resolve(__dirname, 'out/Osci-Painter-darwin-arm64/Osci-Painter.app')
           },
           {
